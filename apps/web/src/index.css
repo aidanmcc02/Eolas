@@ -1,1 +1,20 @@
 @import "tailwindcss";
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes bar-fill {
+  from { width: 0%; }
+  to   { width: var(--bar-width); }
+}
+
+.animate-slide-up { animation: slide-up 0.5s cubic-bezier(0.16,1,0.3,1) forwards; }
+.animate-fade-in  { animation: fade-in 0.4s ease forwards; }
+.animate-bar-fill { animation: bar-fill 0.9s cubic-bezier(0.16,1,0.3,1) forwards; }

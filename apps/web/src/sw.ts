@@ -22,5 +22,17 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const url = (event.notification.data as { url?: string })?.url ?? '/';
-  event.waitUntil((self.clients as any).openWindow(url));
+  const tab = new URL(url, 'https://x').searchParams.get('tab');
+
+  event.waitUntil(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (self.clients as any).matchAll({ type: 'window', includeUncontrolled: true }).then((list: any[]) => {
+      if (list.length > 0) {
+        const client = list[0];
+        if (tab) client.postMessage({ type: 'navigate-tab', tab });
+        return client.focus();
+      }
+      return (self.clients as any).openWindow(url);
+    }),
+  );
 });

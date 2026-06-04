@@ -13,11 +13,11 @@ if (!API_URL || !API_KEY) {
 
 const anthropic = new Anthropic();
 
-async function sendNotification(title: string, body: string): Promise<void> {
+async function sendNotification(title: string, body: string, url = '/'): Promise<void> {
   const res = await fetch(`${API_URL}/v1/push/notify`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${API_KEY}` },
-    body: JSON.stringify({ title, body }),
+    body: JSON.stringify({ title, body, url }),
   });
   if (!res.ok) console.error(`push/notify failed: ${res.status}`);
 }
@@ -59,7 +59,7 @@ async function runMorningBrief(): Promise<void> {
   const now = new Date();
   const day = now.toLocaleDateString('en-IE', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Europe/Dublin' });
 
-  await sendNotification(`Dublin · ${day}`, advice);
+  await sendNotification(`Dublin · ${day}`, advice, '/?tab=weather');
 }
 
 console.log('Eolas agents running');

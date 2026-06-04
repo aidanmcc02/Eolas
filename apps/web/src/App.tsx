@@ -11,12 +11,16 @@ import { Sidebar } from './components/Sidebar.js';
 import { subscribeToPush, needsPushPrompt } from './lib/push.js';
 import { MessageThread } from './components/MessageThread.js';
 import { FinanceTab } from './components/FinanceTab.js';
+import { WeatherTab } from './components/WeatherTab.js';
 import { isTauri } from './lib/tauri.js';
 
-type Tab = 'chat' | 'finance';
+type Tab = 'chat' | 'weather' | 'finance';
 
 export default function App() {
-  const [tab, setTab] = useState<Tab>('chat');
+  const [tab, setTab] = useState<Tab>(() => {
+    const p = new URLSearchParams(window.location.search).get('tab');
+    return (p === 'weather' || p === 'finance') ? p : 'chat';
+  });
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -26,6 +30,15 @@ export default function App() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
   const [showPushBanner, setShowPushBanner] = useState(() => needsPushPrompt());
+
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === 'navigate-tab') setTab(e.data.tab as Tab);
+    };
+    navigator.serviceWorker.addEventListener('message', handler);
+    return () => navigator.serviceWorker.removeEventListener('message', handler);
+  }, []);
 
   useEffect(() => {
     listConversations()
@@ -141,18 +154,23 @@ export default function App() {
           </button>
         )}
 
-        {isTauri && (
-          <nav className="shrink-0 flex border-b border-slate-800 bg-slate-900 px-2">
-            <TabButton active={tab === 'chat'} onClick={() => setTab('chat')}>
-              Chat
-            </TabButton>
+        <nav className="shrink-0 flex border-b border-slate-800 bg-slate-900 px-2">
+          <TabButton active={tab === 'chat'} onClick={() => setTab('chat')}>
+            Chat
+          </TabButton>
+          <TabButton active={tab === 'weather'} onClick={() => setTab('weather')}>
+            Weather
+          </TabButton>
+          {isTauri && (
             <TabButton active={tab === 'finance'} onClick={() => setTab('finance')}>
               Finance
             </TabButton>
-          </nav>
-        )}
+          )}
+        </nav>
 
-        {tab === 'finance' ? (
+        {tab === 'weather' ? (
+          <WeatherTab />
+        ) : tab === 'finance' ? (
           <FinanceTab />
         ) : (
           <div className="flex flex-1 overflow-hidden">
