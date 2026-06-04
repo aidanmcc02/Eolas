@@ -14,7 +14,7 @@ COPY apps/api ./apps/api
 RUN pnpm --filter @eolas/types build
 RUN pnpm --filter @eolas/api build
 # Create a standalone deployment folder with all prod deps flattened (no symlinks)
-RUN pnpm --filter @eolas/api deploy --prod /deploy
+RUN pnpm --filter @eolas/api deploy --prod --legacy /deploy
 
 FROM node:22-alpine AS runner
 WORKDIR /app
