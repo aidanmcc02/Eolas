@@ -8,9 +8,9 @@ function getApiKey(): string {
   return localStorage.getItem('eolas_api_key') ?? '';
 }
 
-function headers(): Record<string, string> {
+function headers(withBody = false): Record<string, string> {
   return {
-    'Content-Type': 'application/json',
+    ...(withBody ? { 'Content-Type': 'application/json' } : {}),
     Authorization: `Bearer ${getApiKey()}`,
   };
 }
@@ -18,7 +18,8 @@ function headers(): Record<string, string> {
 export async function createConversation(): Promise<Conversation> {
   const res = await fetch(`${BASE_URL}/v1/conversations`, {
     method: 'POST',
-    headers: headers(),
+    headers: headers(true),
+    body: '{}',
   });
   if (!res.ok) throw new Error(`Failed to create conversation: ${res.status}`);
   const data = await res.json() as { id: string; title: string; createdAt: string; updatedAt: string };
@@ -57,7 +58,7 @@ export async function* streamMessage(
 ): AsyncGenerator<StreamEvent> {
   const res = await fetch(`${BASE_URL}/v1/conversations/${conversationId}/messages`, {
     method: 'POST',
-    headers: headers(),
+    headers: headers(true),
     body: JSON.stringify({ content }),
   });
 
