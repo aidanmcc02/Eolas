@@ -1,5 +1,5 @@
-const LAT = 53.3498;
-const LON = -6.2603;
+const LAT = 51.8985;
+const LON = -8.4756;
 
 const BASE_URL = (import.meta.env['VITE_API_URL'] as string | undefined) ?? '';
 

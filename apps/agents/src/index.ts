@@ -40,14 +40,14 @@ async function runMorningBrief(): Promise<void> {
     ? `Pollen (grains/m³): grass ${p.grass}, alder ${p.alder}, birch ${p.birch}`
     : 'Pollen data unavailable';
 
-  const dataContext = `Dublin weather today: ${w.tempMin}–${w.tempMax}°C, ${w.description}${w.precip > 0 ? `, ${w.precip.toFixed(1)}mm rain` : ''}, UV index ${w.uvIndex}. ${pollenContext}`;
+  const dataContext = `Cork weather today: ${w.tempMin}–${w.tempMax}°C, ${w.description}${w.precip > 0 ? `, ${w.precip.toFixed(1)}mm rain` : ''}, UV index ${w.uvIndex}. ${pollenContext}`;
 
   let advice: string;
   try {
     const msg = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 80,
-      system: 'You are a concise Dublin morning assistant. Given today\'s weather and pollen data, write one short practical sentence of advice. Mention coat or umbrella if rain is likely. Mention antihistamine if any pollen is above 10 grains/m³. Mention sunscreen if UV index is 3 or above. Be direct and brief — under 140 characters.',
+      system: 'You are a concise Cork morning assistant. Given today\'s weather and pollen data, write one short practical sentence of advice. Mention coat or umbrella if rain is likely. Mention antihistamine if any pollen is above 10 grains/m³. Mention sunscreen if UV index is 3 or above. Be direct and brief — under 140 characters.',
       messages: [{ role: 'user', content: dataContext }],
     });
     advice = msg.content[0]?.type === 'text' ? msg.content[0].text : dataContext;
@@ -59,7 +59,7 @@ async function runMorningBrief(): Promise<void> {
   const now = new Date();
   const day = now.toLocaleDateString('en-IE', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Europe/Dublin' });
 
-  await sendNotification(`Dublin · ${day}`, advice, '/?tab=weather');
+  await sendNotification(`Cork · ${day}`, advice, '/?tab=weather');
 }
 
 console.log('Eolas agents running');

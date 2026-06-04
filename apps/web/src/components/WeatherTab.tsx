@@ -71,7 +71,7 @@ export function WeatherTab() {
           style={{ animationDelay: '0ms' }}
         >
           <span className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-            Dublin, Ireland
+            Cork, Ireland
           </span>
           <span className="text-xs text-slate-500">
             {new Date().toLocaleDateString('en-IE', {

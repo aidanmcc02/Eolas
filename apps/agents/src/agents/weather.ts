@@ -1,5 +1,5 @@
-const LAT = 53.3498;
-const LON = -6.2603;
+const LAT = 51.8985;
+const LON = -8.4756;
 
 const WMO_DESCRIPTIONS: Record<number, string> = {
   0: 'clear sky', 1: 'mainly clear', 2: 'partly cloudy', 3: 'overcast',

@@ -16,7 +16,7 @@ export async function weatherRoutes(app: FastifyInstance): Promise<void> {
     const body = req.body as WeatherSummaryBody;
 
     const context = [
-      `Dublin today: ${body.temp}°C (feels like ${body.feelsLike}°C), ${body.description}`,
+      `Cork today: ${body.temp}°C (feels like ${body.feelsLike}°C), ${body.description}`,
       body.precip > 0 ? `${body.precip.toFixed(1)}mm rain expected` : 'No rain',
       `UV index ${body.uvIndex}, wind ${body.windSpeed} km/h`,
       body.pollen
@@ -30,7 +30,7 @@ export async function weatherRoutes(app: FastifyInstance): Promise<void> {
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 120,
         system:
-          'You are a friendly Dublin weather assistant. Write 2 concise sentences summarising today\'s weather and giving practical advice (umbrella, sunscreen, antihistamine if pollen > 10). Warm and natural tone. No emojis.',
+          'You are a friendly Cork weather assistant. Write 2 concise sentences summarising today\'s weather and giving practical advice (umbrella, sunscreen, antihistamine if pollen > 10). Warm and natural tone. No emojis.',
         messages: [{ role: 'user', content: context }],
       });
 
