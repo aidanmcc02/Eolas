@@ -6,12 +6,13 @@ interface Props {
   onSelect: (id: string) => void;
   onCreate: () => void;
   creating: boolean;
+  createError: string | null;
 }
 
-export function Sidebar({ conversations, selectedId, onSelect, onCreate, creating }: Props) {
+export function Sidebar({ conversations, selectedId, onSelect, onCreate, creating, createError }: Props) {
   return (
     <aside className="w-60 shrink-0 flex flex-col bg-slate-900 border-r border-slate-800 h-full">
-      <div className="p-3 border-b border-slate-800">
+      <div className="p-3 border-b border-slate-800 space-y-2">
         <button
           onClick={onCreate}
           disabled={creating}
@@ -20,6 +21,9 @@ export function Sidebar({ conversations, selectedId, onSelect, onCreate, creatin
           <span className="text-lg leading-none">+</span>
           New conversation
         </button>
+        {createError && (
+          <p className="text-xs text-red-400 text-center">{createError}</p>
+        )}
       </div>
 
       <nav className="flex-1 overflow-y-auto py-2 space-y-0.5 px-2">

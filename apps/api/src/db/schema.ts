@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core';
 
 export const conversations = pgTable('conversations', {
   id: text('id').primaryKey(),
@@ -16,3 +16,10 @@ export const messages = pgTable('messages', {
   content: text('content').notNull(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 });
+
+export const pushSubscriptions = pgTable('push_subscriptions', {
+  id: text('id').primaryKey(),
+  endpoint: text('endpoint').notNull(),
+  keys: text('keys').notNull(), // encrypted JSON: { p256dh, auth }
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (t) => [unique('push_subscriptions_endpoint_unique').on(t.endpoint)]);
