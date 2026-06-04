@@ -22,10 +22,27 @@ async function sendNotification(title: string, body: string, url = '/'): Promise
   if (!res.ok) console.error(`push/notify failed: ${res.status}`);
 }
 
+async function fetchSavedLocation(): Promise<{ lat: number; lon: number; label: string } | null> {
+  try {
+    const res = await fetch(`${API_URL}/v1/location`, {
+      headers: { Authorization: `Bearer ${API_KEY}` },
+    });
+    if (!res.ok) return null;
+    return await res.json() as { lat: number; lon: number; label: string };
+  } catch {
+    return null;
+  }
+}
+
 async function runMorningBrief(): Promise<void> {
+  const location = await fetchSavedLocation();
+  const lat = location?.lat;
+  const lon = location?.lon;
+  const place = location?.label ?? 'Cork';
+
   const [weatherResult, pollenResult] = await Promise.allSettled([
-    getWeatherData(),
-    getPollenData(),
+    getWeatherData(lat, lon),
+    getPollenData(lat, lon),
   ]);
 
   if (weatherResult.status === 'rejected') {
@@ -59,7 +76,7 @@ async function runMorningBrief(): Promise<void> {
   const now = new Date();
   const day = now.toLocaleDateString('en-IE', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Europe/Dublin' });
 
-  await sendNotification(`Cork · ${day}`, advice, '/?tab=weather');
+  await sendNotification(`${place} · ${day}`, advice, '/?tab=weather');
 }
 
 console.log('Eolas agents running');

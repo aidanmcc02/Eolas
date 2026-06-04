@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core';
+import { doublePrecision, pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core';
 
 export const conversations = pgTable('conversations', {
   id: text('id').primaryKey(),
@@ -23,3 +23,12 @@ export const pushSubscriptions = pgTable('push_subscriptions', {
   keys: text('keys').notNull(), // encrypted JSON: { p256dh, auth }
   createdAt: timestamp('created_at').notNull().defaultNow(),
 }, (t) => [unique('push_subscriptions_endpoint_unique').on(t.endpoint)]);
+
+// Single-row table — always upserted with id = 'default'
+export const userLocation = pgTable('user_location', {
+  id: text('id').primaryKey(),
+  lat: doublePrecision('lat').notNull(),
+  lon: doublePrecision('lon').notNull(),
+  label: text('label'),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});

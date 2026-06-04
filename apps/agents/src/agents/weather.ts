@@ -1,5 +1,5 @@
-const LAT = 51.8985;
-const LON = -8.4756;
+const DEFAULT_LAT = 51.8985;
+const DEFAULT_LON = -8.4756;
 
 const WMO_DESCRIPTIONS: Record<number, string> = {
   0: 'clear sky', 1: 'mainly clear', 2: 'partly cloudy', 3: 'overcast',
@@ -29,12 +29,12 @@ interface OpenMeteoDaily {
   };
 }
 
-export async function getWeatherData(): Promise<WeatherData> {
+export async function getWeatherData(lat = DEFAULT_LAT, lon = DEFAULT_LON): Promise<WeatherData> {
   const url =
     `https://api.open-meteo.com/v1/forecast` +
-    `?latitude=${LAT}&longitude=${LON}` +
+    `?latitude=${lat}&longitude=${lon}` +
     `&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weathercode,uv_index_max` +
-    `&timezone=Europe%2FDublin&forecast_days=1`;
+    `&timezone=auto&forecast_days=1`;
 
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Open-Meteo weather error: ${res.status}`);

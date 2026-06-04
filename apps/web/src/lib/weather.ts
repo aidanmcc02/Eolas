@@ -60,18 +60,18 @@ interface OpenMeteoAirQuality {
 const maxOf = (arr: (number | null)[]) =>
   arr.reduce<number>((m, v) => (v != null && v > m ? v : m), 0);
 
-export async function fetchWeather(): Promise<WeatherData> {
+export async function fetchWeather(lat = LAT, lon = LON): Promise<WeatherData> {
   const [forecastRes, pollenRes] = await Promise.allSettled([
     fetch(
       `https://api.open-meteo.com/v1/forecast` +
-      `?latitude=${LAT}&longitude=${LON}` +
+      `?latitude=${lat}&longitude=${lon}` +
       `&current=temperature_2m,apparent_temperature,weathercode,wind_speed_10m` +
       `&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weathercode,uv_index_max` +
       `&timezone=Europe%2FDublin&forecast_days=7`,
     ),
     fetch(
       `https://air-quality-api.open-meteo.com/v1/air-quality` +
-      `?latitude=${LAT}&longitude=${LON}` +
+      `?latitude=${lat}&longitude=${lon}` +
       `&hourly=grass_pollen,alder_pollen,birch_pollen` +
       `&timezone=Europe%2FDublin&forecast_days=1`,
     ),
@@ -161,6 +161,68 @@ export function pollenInfo(grains: number): { label: string; color: string; bg: 
   return { label: 'Very high', color: 'text-red-400', bg: 'bg-red-500', pct: 100 };
 }
 
+export function getUserLocation(): Promise<{ lat: number; lon: number } | null> {
+  return new Promise((resolve) => {
+    if (!('geolocation' in navigator)) { resolve(null); return; }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+      () => resolve(null),
+      { timeout: 8000, maximumAge: 600000, enableHighAccuracy: false },
+    );
+  });
+}
+
+export async function getLocationLabel(lat: number, lon: number): Promise<string> {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
+      { headers: { 'Accept-Language': 'en' } },
+    );
+    if (!res.ok) return 'Your Location';
+    const data = await res.json() as {
+      address?: { city?: string; town?: string; village?: string; county?: string; country?: string };
+    };
+    const city =
+      data.address?.city ??
+      data.address?.town ??
+      data.address?.village ??
+      data.address?.county ??
+      'Your Location';
+    const country = data.address?.country ?? '';
+    return country ? `${city}, ${country}` : city;
+  } catch {
+    return 'Your Location';
+  }
+}
+
+export async function saveLocation(lat: number, lon: number, label: string): Promise<void> {
+  const apiKey = localStorage.getItem('eolas_api_key') ?? '';
+  await fetch(`${BASE_URL}/v1/location`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({ lat, lon, label }),
+  });
+}
+
+const SUMMARY_CACHE_KEY = 'eolas_weather_summary';
+const SUMMARY_TTL = 4 * 60 * 60 * 1000; // 4 hours
+
+export function getCachedSummary(): string | null {
+  try {
+    const raw = localStorage.getItem(SUMMARY_CACHE_KEY);
+    if (!raw) return null;
+    const { summary, ts } = JSON.parse(raw) as { summary: string; ts: number };
+    if (Date.now() - ts > SUMMARY_TTL) return null;
+    return summary;
+  } catch {
+    return null;
+  }
+}
+
+function cacheSummary(summary: string): void {
+  localStorage.setItem(SUMMARY_CACHE_KEY, JSON.stringify({ summary, ts: Date.now() }));
+}
+
 export async function fetchWeatherSummary(data: WeatherData): Promise<string> {
   const apiKey = localStorage.getItem('eolas_api_key') ?? '';
   const res = await fetch(`${BASE_URL}/v1/weather/summary`, {
@@ -178,5 +240,6 @@ export async function fetchWeatherSummary(data: WeatherData): Promise<string> {
   });
   if (!res.ok) throw new Error('summary failed');
   const json = await res.json() as { summary: string };
+  cacheSummary(json.summary);
   return json.summary;
 }

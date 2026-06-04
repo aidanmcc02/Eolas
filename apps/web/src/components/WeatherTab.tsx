@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react';
 import {
   fetchWeather,
   fetchWeatherSummary,
+  getCachedSummary,
+  getUserLocation,
+  getLocationLabel,
+  saveLocation,
   weatherGradient,
   uvInfo,
   pollenInfo,
@@ -14,19 +18,42 @@ import {
 export function WeatherTab() {
   const [data, setData] = useState<WeatherData | null>(null);
   const [summary, setSummary] = useState<string | null>(null);
+  const [locationLabel, setLocationLabel] = useState('Cork, Ireland');
   const [error, setError] = useState(false);
   const [barsReady, setBarsReady] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
     setBarsReady(false);
     setSummary(null);
-    fetchWeather()
-      .then((d) => {
-        setData(d);
-        setTimeout(() => setBarsReady(true), 200);
-        fetchWeatherSummary(d).then(setSummary).catch(() => {});
-      })
-      .catch(() => setError(true));
+
+    async function load() {
+      const coords = await getUserLocation();
+      const lat = coords?.lat ?? 51.8985;
+      const lon = coords?.lon ?? -8.4756;
+
+      const [weatherData, label] = await Promise.all([
+        fetchWeather(lat, lon),
+        coords ? getLocationLabel(lat, lon) : Promise.resolve('Cork, Ireland'),
+      ]);
+
+      if (cancelled) return;
+      setData(weatherData);
+      setLocationLabel(label);
+      setTimeout(() => setBarsReady(true), 200);
+
+      if (coords) saveLocation(lat, lon, label).catch(() => {});
+
+      const cached = getCachedSummary();
+      if (cached) {
+        if (!cancelled) setSummary(cached);
+      } else {
+        fetchWeatherSummary(weatherData).then((s) => { if (!cancelled) setSummary(s); }).catch(() => {});
+      }
+    }
+
+    load().catch(() => { if (!cancelled) setError(true); });
+    return () => { cancelled = true; };
   }, []);
 
   if (error) {
@@ -71,7 +98,7 @@ export function WeatherTab() {
           style={{ animationDelay: '0ms' }}
         >
           <span className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-            Cork, Ireland
+            {locationLabel}
           </span>
           <span className="text-xs text-slate-500">
             {new Date().toLocaleDateString('en-IE', {

@@ -32,7 +32,7 @@ export async function weatherRoutes(app: FastifyInstance): Promise<void> {
         system:
           'You are a friendly Cork weather assistant. Write 2 concise sentences summarising today\'s weather and giving practical advice (umbrella, sunscreen, antihistamine if pollen > 10). Warm and natural tone. No emojis.',
         messages: [{ role: 'user', content: context }],
-      });
+      }, { timeout: 15_000 });
 
       const summary = msg.content[0]?.type === 'text' ? msg.content[0].text : '';
       return { summary };

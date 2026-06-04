@@ -8,6 +8,7 @@ import { conversationsRoutes } from './routes/conversations.js';
 import { messagesRoutes } from './routes/messages.js';
 import { pushRoutes } from './routes/push.js';
 import { weatherRoutes } from './routes/weather.js';
+import { locationRoutes } from './routes/location.js';
 
 assertEncryptionKey();
 assertVapidKeys();
@@ -26,6 +27,7 @@ await app.register(async (api) => {
   await api.register(messagesRoutes, { prefix: '/v1' });
   await api.register(pushRoutes, { prefix: '/v1' });
   await api.register(weatherRoutes, { prefix: '/v1' });
+  await api.register(locationRoutes, { prefix: '/v1' });
 });
 
 const port = Number(process.env['PORT'] ?? 3001);

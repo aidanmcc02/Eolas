@@ -1,5 +1,5 @@
-const LAT = 51.8985;
-const LON = -8.4756;
+const DEFAULT_LAT = 51.8985;
+const DEFAULT_LON = -8.4756;
 
 export interface PollenData {
   grass: number;
@@ -18,12 +18,12 @@ interface OpenMeteoAirQuality {
 const maxOf = (arr: (number | null)[]) =>
   arr.reduce<number>((m, v) => (v != null && v > m ? v : m), 0);
 
-export async function getPollenData(): Promise<PollenData | null> {
+export async function getPollenData(lat = DEFAULT_LAT, lon = DEFAULT_LON): Promise<PollenData | null> {
   const url =
     `https://air-quality-api.open-meteo.com/v1/air-quality` +
-    `?latitude=${LAT}&longitude=${LON}` +
+    `?latitude=${lat}&longitude=${lon}` +
     `&hourly=grass_pollen,alder_pollen,birch_pollen` +
-    `&timezone=Europe%2FDublin&forecast_days=1`;
+    `&timezone=auto&forecast_days=1`;
 
   const res = await fetch(url);
   if (!res.ok) return null;
