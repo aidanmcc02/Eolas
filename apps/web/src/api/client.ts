@@ -1,6 +1,8 @@
 import type { Conversation, Message } from '@eolas/types';
 
-const BASE_URL = (import.meta.env['VITE_API_URL'] as string | undefined) ?? 'http://localhost:3001';
+// In dev: set VITE_API_URL=http://localhost:3001 in apps/web/.env.local
+// In prod: leave unset — nginx proxies /v1/ to the internal API service
+const BASE_URL = (import.meta.env['VITE_API_URL'] as string | undefined) ?? '';
 
 function getApiKey(): string {
   return localStorage.getItem('eolas_api_key') ?? '';

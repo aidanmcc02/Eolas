@@ -13,13 +13,13 @@ FROM installer AS builder
 COPY packages/types ./packages/types
 COPY packages/ui ./packages/ui
 COPY apps/web ./apps/web
-ARG VITE_API_URL
-ENV VITE_API_URL=$VITE_API_URL
 RUN pnpm --filter @eolas/types build
 RUN pnpm --filter @eolas/ui build
 RUN pnpm --filter @eolas/web build
 
 FROM nginx:alpine AS runner
 COPY --from=builder /repo/apps/web/dist /usr/share/nginx/html
-COPY apps/web/nginx.conf /etc/nginx/conf.d/default.conf
+COPY apps/web/nginx.conf.template /etc/nginx/conf.d/default.conf.template
 EXPOSE 80
+# Substitute $API_INTERNAL_URL into the nginx config at container startup
+CMD ["/bin/sh", "-c", "envsubst '${API_INTERNAL_URL}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
