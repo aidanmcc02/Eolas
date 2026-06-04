@@ -23,5 +23,4 @@ FROM nginx:alpine AS runner
 COPY --from=builder /repo/apps/web/dist /usr/share/nginx/html
 COPY apps/web/nginx.conf.template /etc/nginx/conf.d/default.conf.template
 EXPOSE 80
-# Extract the container's DNS resolver and substitute it along with $API_INTERNAL_URL
-CMD ["/bin/sh", "-c", "RESOLVER=$(awk '/^nameserver/{print $2; exit}' /etc/resolv.conf) && envsubst '${API_INTERNAL_URL}${RESOLVER}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
+CMD ["/bin/sh", "-c", "envsubst '${API_INTERNAL_URL}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
