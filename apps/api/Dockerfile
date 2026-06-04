@@ -13,12 +13,12 @@ COPY packages/types ./packages/types
 COPY apps/api ./apps/api
 RUN pnpm --filter @eolas/types build
 RUN pnpm --filter @eolas/api build
+# Create a standalone deployment folder with all prod deps flattened (no symlinks)
+RUN pnpm --filter @eolas/api deploy --prod /deploy
 
 FROM node:22-alpine AS runner
 WORKDIR /app
-COPY --from=builder /repo/apps/api/dist ./dist
+COPY --from=builder /deploy .
 COPY --from=builder /repo/apps/api/drizzle ./drizzle
-COPY --from=builder /repo/apps/api/package.json ./package.json
-COPY --from=builder /repo/node_modules ./node_modules
 EXPOSE 3001
 CMD ["node", "dist/index.js"]
