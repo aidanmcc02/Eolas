@@ -1,4 +1,3 @@
-// Dublin coordinates
 const LAT = 53.3498;
 const LON = -6.2603;
 
@@ -12,33 +11,40 @@ const WMO_DESCRIPTIONS: Record<number, string> = {
   95: 'thunderstorm',
 };
 
+export interface WeatherData {
+  tempMin: number;
+  tempMax: number;
+  precip: number;
+  description: string;
+  uvIndex: number;
+}
+
 interface OpenMeteoDaily {
   daily: {
-    time: string[];
     temperature_2m_max: number[];
     temperature_2m_min: number[];
     precipitation_sum: number[];
     weathercode: number[];
+    uv_index_max: number[];
   };
 }
 
-export async function getWeatherSummary(): Promise<string> {
+export async function getWeatherData(): Promise<WeatherData> {
   const url =
     `https://api.open-meteo.com/v1/forecast` +
     `?latitude=${LAT}&longitude=${LON}` +
-    `&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weathercode` +
+    `&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weathercode,uv_index_max` +
     `&timezone=Europe%2FDublin&forecast_days=1`;
 
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Open-Meteo weather error: ${res.status}`);
   const data = await res.json() as OpenMeteoDaily;
 
-  const max = Math.round(data.daily.temperature_2m_max[0] ?? 0);
-  const min = Math.round(data.daily.temperature_2m_min[0] ?? 0);
-  const precip = data.daily.precipitation_sum[0] ?? 0;
-  const code = data.daily.weathercode[0] ?? 0;
-  const desc = WMO_DESCRIPTIONS[code] ?? 'variable';
-
-  const precipStr = precip > 0 ? `, ${precip.toFixed(1)}mm rain` : '';
-  return `${min}–${max}°C, ${desc}${precipStr}`;
+  return {
+    tempMin: Math.round(data.daily.temperature_2m_min[0] ?? 0),
+    tempMax: Math.round(data.daily.temperature_2m_max[0] ?? 0),
+    precip: data.daily.precipitation_sum[0] ?? 0,
+    description: WMO_DESCRIPTIONS[data.daily.weathercode[0] ?? 0] ?? 'variable',
+    uvIndex: Math.round(data.daily.uv_index_max[0] ?? 0),
+  };
 }
