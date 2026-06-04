@@ -1,0 +1,52 @@
+name: Build Windows Installer
+
+on:
+  push:
+    tags:
+      - 'v*'          # runs on version tags e.g. v1.0.0
+  workflow_dispatch:  # allows manual trigger from GitHub Actions UI
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Eolas (web + Tauri)
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        with:
+          projectPath: apps/desktop
+          tagName: ${{ github.ref_name }}
+          releaseName: Eolas ${{ github.ref_name }}
+          releaseBody: |
+            Download `Eolas_*_x64-setup.exe` below and run it to install.
+            See [docs/windows-setup.md](https://github.com/${{ github.repository }}/blob/main/docs/windows-setup.md) for full setup instructions.
+          releaseDraft: false
+          prerelease: false
+          includeUpdaterJson: false

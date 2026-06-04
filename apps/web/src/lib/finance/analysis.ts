@@ -75,6 +75,19 @@ export function groupByMonth(transactions: Transaction[]): MonthSummary[] {
     .sort((a, b) => a.month.localeCompare(b.month));
 }
 
+export function groupByDay(transactions: Transaction[]): Array<{ date: string; spend: number }> {
+  const map = new Map<string, number>();
+
+  for (const t of transactions) {
+    if (t.amount >= 0 || NON_SPEND_CATEGORIES.has(t.category)) continue;
+    map.set(t.date, (map.get(t.date) ?? 0) + Math.abs(t.amount));
+  }
+
+  return Array.from(map.entries())
+    .map(([date, spend]) => ({ date, spend: Math.round(spend * 100) / 100 }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
 export function buildInsightsSummary(
   transactions: Transaction[],
   months: MonthSummary[]

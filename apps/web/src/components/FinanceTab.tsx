@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   PieChart, Pie, Cell, BarChart, Bar,
+  LineChart, Line, CartesianGrid,
   XAxis, YAxis, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 import { parseAIBCsv } from '../lib/finance/parser';
 import { categorizeTransactions, generateInsights, applyAmountOverrides } from '../lib/finance/ollama';
-import { groupByCategory, groupByMonth, buildInsightsSummary, formatMonth, formatCurrency, totalSavings, totalSpend as calcTotalSpend } from '../lib/finance/analysis';
+import { groupByCategory, groupByMonth, groupByDay, buildInsightsSummary, formatMonth, formatCurrency, totalSavings, totalSpend as calcTotalSpend } from '../lib/finance/analysis';
 import { initDb, saveTransactions, loadTransactions, updateCategories, markMonthSaved, clearAllUnsaved, clearAll } from '../lib/finance/db';
 import type { Transaction, CategorySummary, MonthSummary } from '../lib/finance/types';
 import { CATEGORY_COLORS, CATEGORIES } from '../lib/finance/types';
@@ -324,6 +325,7 @@ export function FinanceTab() {
           <OverviewView
             categories={categories}
             months={months}
+            transactions={viewTransactions}
             totalSpend={totalSpend}
             totalIncome={totalIncome}
             totalSaved={saved}
@@ -420,11 +422,12 @@ function EmptyState({
 }
 
 function OverviewView({
-  categories, months, totalSpend, totalIncome, totalSaved, txCount,
+  categories, months, transactions, totalSpend, totalIncome, totalSaved, txCount,
   isOverall, otherTransactions, onRecategorize,
 }: {
   categories: CategorySummary[];
   months: MonthSummary[];
+  transactions: Transaction[];
   totalSpend: number;
   totalIncome: number;
   totalSaved: number;
@@ -436,6 +439,7 @@ function OverviewView({
   const recentMonths = months.slice(-6);
   const netFlow = totalIncome - totalSpend;
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
+  const dailySpend = groupByDay(transactions);
 
   return (
     <div className="p-4 space-y-6">
@@ -454,37 +458,70 @@ function OverviewView({
       <div className="grid grid-cols-2 gap-4">
         <div className="border border-[#00ff4122] bg-[#0a0a0a] p-4">
           <p className="text-[#00ff4155] text-xs tracking-widest mb-3">// SPEND BY CATEGORY</p>
-          <ResponsiveContainer width="100%" height={260}>
-            <PieChart>
-              <Pie
-                data={categories}
-                dataKey="total"
-                nameKey="category"
-                cx="50%"
-                cy="50%"
-                outerRadius={90}
-                innerRadius={45}
-                paddingAngle={2}
-                onMouseEnter={(_, index) => setHoveredCategory(categories[index]?.category ?? null)}
-                onMouseLeave={() => setHoveredCategory(null)}
-              >
-                {categories.map((c) => (
-                  <Cell
-                    key={c.category}
-                    fill={c.color}
-                    stroke={hoveredCategory === c.category ? c.color : 'transparent'}
-                    strokeWidth={2}
-                    opacity={hoveredCategory === null || hoveredCategory === c.category ? 1 : 0.4}
-                  />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={{ background: '#0d0d0d', border: '1px solid #00ff4133', borderRadius: 0, fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: '#00ff41' }}
-                formatter={(val) => [`€${Number(val).toFixed(2)}`, '']}
-              />
-              <Legend formatter={(value) => <span style={{ color: '#00ff4188', fontSize: 10, fontFamily: 'Share Tech Mono, monospace' }}>{value}</span>} iconSize={8} />
-            </PieChart>
-          </ResponsiveContainer>
+          {/* Relative wrapper so the donut-hole overlay is positioned correctly */}
+          <div className="relative">
+            <ResponsiveContainer width="100%" height={260}>
+              <PieChart>
+                <Pie
+                  data={categories}
+                  dataKey="total"
+                  nameKey="category"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={90}
+                  innerRadius={50}
+                  paddingAngle={2}
+                  onMouseEnter={(_, index) => setHoveredCategory(categories[index]?.category ?? null)}
+                  onMouseLeave={() => setHoveredCategory(null)}
+                >
+                  {categories.map((c) => (
+                    <Cell
+                      key={c.category}
+                      fill={c.color}
+                      stroke={hoveredCategory === c.category ? c.color : 'transparent'}
+                      strokeWidth={3}
+                      opacity={hoveredCategory === null || hoveredCategory === c.category ? 1 : 0.3}
+                    />
+                  ))}
+                </Pie>
+                <Legend formatter={(value) => <span style={{ color: '#00ff4188', fontSize: 10, fontFamily: 'Share Tech Mono, monospace' }}>{value}</span>} iconSize={8} />
+              </PieChart>
+            </ResponsiveContainer>
+
+            {/* Donut hole label — shows hovered category or total */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none"
+              style={{ paddingBottom: 30 /* offset for legend */ }}
+            >
+              {(() => {
+                const hovered = categories.find((c) => c.category === hoveredCategory);
+                const pieTotal = categories.reduce((s, c) => s + c.total, 0);
+                if (hovered) {
+                  const pct = pieTotal > 0 ? (hovered.total / pieTotal) * 100 : 0;
+                  return (
+                    <div className="text-center animate-fade-in" key={hovered.category}>
+                      <p className="text-[10px] tracking-widest mb-0.5" style={{ color: hovered.color }}>
+                        {hovered.category.toUpperCase()}
+                      </p>
+                      <p className="text-lg font-mono leading-none" style={{ color: hovered.color }}>
+                        {formatCurrency(hovered.total)}
+                      </p>
+                      <p className="text-[10px] mt-0.5" style={{ color: `${hovered.color}88` }}>
+                        {pct.toFixed(1)}%
+                      </p>
+                    </div>
+                  );
+                }
+                return (
+                  <div className="text-center">
+                    <p className="text-[9px] tracking-widest text-[#00ff4144] mb-0.5">TOTAL</p>
+                    <p className="text-base font-mono text-[#00ff4188] leading-none">
+                      {formatCurrency(pieTotal)}
+                    </p>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
         </div>
 
         <div className="border border-[#00ff4122] bg-[#0a0a0a] p-4">
@@ -505,6 +542,50 @@ function OverviewView({
             </BarChart>
           </ResponsiveContainer>
         </div>
+      </div>
+
+      {/* Daily spending line chart */}
+      <div className="border border-[#00ff4122] bg-[#0a0a0a] p-4">
+        <p className="text-[#00ff4155] text-xs tracking-widest mb-3">// DAILY SPENDING</p>
+        <ResponsiveContainer width="100%" height={180}>
+          <LineChart data={dailySpend} margin={{ top: 5, right: 10, bottom: 5, left: 5 }}>
+            <CartesianGrid stroke="#00ff4108" vertical={false} />
+            <XAxis
+              dataKey="date"
+              tickFormatter={(d) => {
+                const parts = String(d).split('-');
+                return parts.length === 3 ? `${parts[2]}/${parts[1]}` : d;
+              }}
+              tick={{ fill: '#00ff4155', fontSize: 9, fontFamily: 'Share Tech Mono, monospace' }}
+              axisLine={{ stroke: '#00ff4122' }}
+              tickLine={false}
+              interval="preserveStartEnd"
+            />
+            <YAxis
+              tick={{ fill: '#00ff4155', fontSize: 9, fontFamily: 'Share Tech Mono, monospace' }}
+              axisLine={{ stroke: '#00ff4122' }}
+              tickLine={false}
+              tickFormatter={(v) => `€${v}`}
+              width={48}
+            />
+            <Tooltip
+              contentStyle={{ background: '#0d0d0d', border: '1px solid #00ff4133', borderRadius: 0, fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: '#00ff41' }}
+              formatter={(val) => [`€${Number(val).toFixed(2)}`, 'Spend']}
+              labelFormatter={(label) => {
+                const parts = String(label).split('-');
+                return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : label;
+              }}
+            />
+            <Line
+              type="monotone"
+              dataKey="spend"
+              stroke="#00ff41"
+              strokeWidth={1.5}
+              dot={false}
+              activeDot={{ r: 3, fill: '#00ff41', stroke: 'transparent' }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
       </div>
 
       <div className="border border-[#00ff4122] bg-[#0a0a0a]">
