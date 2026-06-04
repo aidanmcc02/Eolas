@@ -30,6 +30,7 @@ export default function App() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
   const [showPushBanner, setShowPushBanner] = useState(() => needsPushPrompt());
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
@@ -46,8 +47,6 @@ export default function App() {
       .catch(() => setLoadError('Failed to load conversations'));
   }, []);
 
-  // If permission was already granted (e.g. from a previous session), re-subscribe
-  // silently so the subscription is saved to the API — no user gesture needed.
   useEffect(() => {
     if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
       subscribeToPush().catch(() => {});
@@ -60,13 +59,8 @@ export default function App() {
   }
 
   useEffect(() => {
-    if (!selectedId) {
-      setMessages([]);
-      return;
-    }
-    listMessages(selectedId)
-      .then(setMessages)
-      .catch(() => setMessages([]));
+    if (!selectedId) { setMessages([]); return; }
+    listMessages(selectedId).then(setMessages).catch(() => setMessages([]));
   }, [selectedId]);
 
   async function handleCreate() {
@@ -76,6 +70,7 @@ export default function App() {
       const c = await createConversation();
       setConversations((prev) => [c, ...prev]);
       setSelectedId(c.id);
+      setSidebarOpen(false);
     } catch (err) {
       setCreateError(err instanceof Error ? err.message : 'Failed to create conversation');
     } finally {
@@ -104,7 +99,6 @@ export default function App() {
           fullText += event.text;
           setStreamingText(fullText);
         } else if (event.type === 'done') {
-          // Replace optimistic user message with confirmed IDs, add assistant message
           setMessages((prev) => [
             ...prev.filter((m) => m.id !== optimisticUser.id),
             {
@@ -122,7 +116,6 @@ export default function App() {
               createdAt: new Date(event.assistantCreatedAt),
             },
           ]);
-          // Update conversation title if it changed (first message sets title)
           setConversations((prev) =>
             prev.map((c) =>
               c.id === selectedId
@@ -144,30 +137,45 @@ export default function App() {
 
   return (
     <AuthGate>
-      <div className="flex flex-col h-screen bg-slate-950 text-slate-100">
+      <div className="flex flex-col h-screen bg-[#080808] text-[#00ff41] animate-flicker">
+
+        {/* Push notification banner */}
         {showPushBanner && (
           <button
             onClick={handleEnableNotifications}
-            className="shrink-0 w-full bg-indigo-600 hover:bg-indigo-500 text-white text-sm py-2 px-4 text-center transition-colors"
+            className="shrink-0 w-full bg-[#00ff4110] hover:bg-[#00ff4118] text-[#00ff41] text-xs py-2 px-4 text-center transition-colors border-b border-[#00ff4130] tracking-widest"
           >
-            Tap to enable daily weather &amp; pollen notifications
+            [!] TAP TO ENABLE WEATHER &amp; POLLEN ALERTS
           </button>
         )}
 
-        <nav className="shrink-0 flex border-b border-slate-800 bg-slate-900 px-2">
-          <TabButton active={tab === 'chat'} onClick={() => setTab('chat')}>
-            Chat
-          </TabButton>
-          <TabButton active={tab === 'weather'} onClick={() => setTab('weather')}>
-            Weather
-          </TabButton>
-          {isTauri && (
-            <TabButton active={tab === 'finance'} onClick={() => setTab('finance')}>
-              Finance
-            </TabButton>
+        {/* Tab navigation */}
+        <nav className="shrink-0 flex items-center border-b border-[#00ff4118] bg-[#0a0a0a] px-1">
+          {/* Hamburger — mobile only, only on chat tab */}
+          {tab === 'chat' && (
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="md:hidden text-[#00ff4165] hover:text-[#00ff41] px-3 py-3 transition-colors text-base select-none"
+              aria-label="Open sessions"
+            >
+              ≡
+            </button>
           )}
+
+          <TerminalTab active={tab === 'chat'} onClick={() => setTab('chat')}>CHAT</TerminalTab>
+          <TerminalTab active={tab === 'weather'} onClick={() => setTab('weather')}>WEATHER</TerminalTab>
+          {isTauri && (
+            <TerminalTab active={tab === 'finance'} onClick={() => setTab('finance')}>FINANCE</TerminalTab>
+          )}
+
+          {/* Status indicator */}
+          <div className="ml-auto flex items-center gap-2 pr-3">
+            <span className="text-[#00ff4135] text-xs hidden sm:block tracking-wider">EOLAS v2</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-[#00ff41] animate-pulse shrink-0" />
+          </div>
         </nav>
 
+        {/* Content area */}
         {tab === 'weather' ? (
           <WeatherTab />
         ) : tab === 'finance' ? (
@@ -177,10 +185,12 @@ export default function App() {
             <Sidebar
               conversations={conversations}
               selectedId={selectedId}
-              onSelect={setSelectedId}
+              onSelect={(id) => { setSelectedId(id); setSidebarOpen(false); }}
               onCreate={handleCreate}
               creating={creating}
               createError={createError}
+              isOpen={sidebarOpen}
+              onClose={() => setSidebarOpen(false)}
             />
 
             <main className="flex-1 overflow-hidden">
@@ -192,13 +202,24 @@ export default function App() {
                   onSend={handleSend}
                 />
               ) : (
-                <div className="h-full flex flex-col items-center justify-center gap-3 text-slate-500">
+                <div className="h-full flex flex-col items-center justify-center gap-3 px-4">
                   {loadError ? (
-                    <p className="text-red-400 text-sm">{loadError}</p>
+                    <p className="text-[#ff0040] text-xs">ERR: {loadError}</p>
                   ) : (
                     <>
-                      <p className="text-lg font-medium text-slate-300">Eolas</p>
-                      <p className="text-sm">Select a conversation or start a new one</p>
+                      <p className="text-[#00ff41] text-xl tracking-widest animate-glitch select-none">
+                        EOLAS
+                      </p>
+                      <p className="text-[#00ff4140] text-xs tracking-widest text-center">
+                        SELECT SESSION OR INITIALIZE NEW
+                      </p>
+                      {/* Mobile shortcut to open sidebar */}
+                      <button
+                        onClick={() => setSidebarOpen(true)}
+                        className="md:hidden mt-3 border border-[#00ff4138] text-[#00ff41] text-xs px-6 py-2 tracking-widest hover:bg-[#00ff410d] hover:border-[#00ff4165] transition-all duration-150"
+                      >
+                        [ OPEN SESSIONS ]
+                      </button>
                     </>
                   )}
                 </div>
@@ -211,7 +232,7 @@ export default function App() {
   );
 }
 
-function TabButton({
+function TerminalTab({
   active,
   onClick,
   children,
@@ -223,13 +244,13 @@ function TabButton({
   return (
     <button
       onClick={onClick}
-      className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+      className={`px-3 py-3 text-xs tracking-widest border-b-2 transition-all duration-150 ${
         active
-          ? 'border-indigo-500 text-white'
-          : 'border-transparent text-slate-400 hover:text-slate-200'
+          ? 'border-[#00ff41] text-[#00ff41] shadow-[0_4px_14px_rgba(0,255,65,0.12)]'
+          : 'border-transparent text-[#00ff4148] hover:text-[#00ff41a0] hover:border-[#00ff4130]'
       }`}
     >
-      {children}
+      [{children}]
     </button>
   );
 }

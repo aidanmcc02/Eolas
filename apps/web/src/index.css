@@ -1,4 +1,55 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+/* ── Terminal colour variables ── */
+:root {
+  --t-green:       #00ff41;
+  --t-green-dim:   #00cc33;
+  --t-green-muted: #006622;
+  --t-bg:          #080808;
+  --t-panel:       #0d0d0d;
+  --t-border:      rgba(0,255,65,0.18);
+  --t-border-hi:   rgba(0,255,65,0.4);
+  --t-red:         #ff0040;
+  --t-cyan:        #00ffff;
+}
+
+/* Force monospace everywhere */
+*, *::before, *::after {
+  font-family: 'Share Tech Mono', 'Fira Code', 'Cascadia Code', 'Courier New', monospace !important;
+}
+
+/* CRT scanline overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,255,65,0.012) 2px,
+    rgba(0,255,65,0.012) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Screen vignette */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.62) 100%);
+  pointer-events: none;
+  z-index: 9998;
+}
+
+/* ── Keyframes ── */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
 
 @keyframes slide-up {
   from { opacity: 0; transform: translateY(20px); }
@@ -15,6 +66,77 @@
   to   { width: var(--bar-width); }
 }
 
-.animate-slide-up { animation: slide-up 0.5s cubic-bezier(0.16,1,0.3,1) forwards; }
-.animate-fade-in  { animation: fade-in 0.4s ease forwards; }
-.animate-bar-fill { animation: bar-fill 0.9s cubic-bezier(0.16,1,0.3,1) forwards; }
+@keyframes t-appear {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes flicker {
+  0%, 91%, 93%, 100% { opacity: 1; }
+  92% { opacity: 0.78; }
+}
+
+@keyframes glitch-text {
+  0%, 88%, 92%, 100% {
+    transform: none;
+    color: var(--t-green);
+    text-shadow: none;
+  }
+  89% {
+    transform: translate(-2px, 0);
+    color: var(--t-cyan);
+    text-shadow: 2px 0 var(--t-red);
+  }
+  90% {
+    transform: translate(2px, 0);
+    color: var(--t-red);
+    text-shadow: -2px 0 var(--t-cyan);
+  }
+  91% {
+    transform: translate(-1px, 1px);
+    color: var(--t-green);
+    text-shadow: 1px 0 var(--t-cyan);
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { text-shadow: 0 0 4px rgba(0,255,65,0.3); }
+  50%       { text-shadow: 0 0 14px rgba(0,255,65,0.75), 0 0 28px rgba(0,255,65,0.2); }
+}
+
+/* ── Animation utility classes ── */
+.animate-blink      { animation: blink 1s step-end infinite; }
+.animate-slide-up   { animation: slide-up .5s cubic-bezier(.16,1,.3,1) forwards; }
+.animate-fade-in    { animation: fade-in .4s ease forwards; }
+.animate-bar-fill   { animation: bar-fill .9s cubic-bezier(.16,1,.3,1) forwards; }
+.animate-flicker    { animation: flicker 14s ease-in-out infinite; }
+.animate-glitch     { animation: glitch-text 6s infinite; }
+.animate-glow-pulse { animation: glow-pulse 2.5s ease-in-out infinite; }
+
+/* Boot sequence — staggered line reveals */
+.t-boot-1 { opacity: 0; animation: t-appear .25s ease  .10s forwards; }
+.t-boot-2 { opacity: 0; animation: t-appear .25s ease  .35s forwards; }
+.t-boot-3 { opacity: 0; animation: t-appear .25s ease  .60s forwards; }
+.t-boot-4 { opacity: 0; animation: t-appear .25s ease  .85s forwards; }
+.t-boot-5 { opacity: 0; animation: t-appear .25s ease 1.10s forwards; }
+.t-boot-6 { opacity: 0; animation: t-appear .30s ease 1.40s forwards; }
+
+/* Terminal scrollbar */
+::-webkit-scrollbar       { width: 3px; }
+::-webkit-scrollbar-track { background: var(--t-bg); }
+::-webkit-scrollbar-thumb { background: rgba(0,255,65,.2); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,255,65,.45); }
+
+/* Base terminal input — no visual chrome, just green text + caret */
+.t-input {
+  background: transparent;
+  color: var(--t-green);
+  caret-color: var(--t-green);
+  outline: none;
+  border: none;
+  resize: none;
+}
+.t-input::placeholder {
+  color: var(--t-green-muted);
+  opacity: 0.65;
+}
