@@ -15,7 +15,8 @@ export function assertVapidKeys(): void {
 
 export async function sendPushToAll(title: string, body: string, url = '/'): Promise<void> {
   const subs = await db.select().from(pushSubscriptions);
-  await Promise.allSettled(
+  console.log(`[push] sending to ${subs.length} subscriber(s)`);
+  const results = await Promise.allSettled(
     subs.map(async (row) => {
       const keys = JSON.parse(decrypt(row.keys)) as { p256dh: string; auth: string };
       await webpush.sendNotification(
@@ -24,4 +25,7 @@ export async function sendPushToAll(title: string, body: string, url = '/'): Pro
       );
     }),
   );
+  for (const r of results) {
+    if (r.status === 'rejected') console.error('[push] send failed:', r.reason);
+  }
 }

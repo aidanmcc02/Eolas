@@ -10,6 +10,8 @@ COPY apps/web/package.json ./apps/web/package.json
 RUN pnpm install --frozen-lockfile
 
 FROM installer AS builder
+ARG VITE_VAPID_PUBLIC_KEY
+ENV VITE_VAPID_PUBLIC_KEY=$VITE_VAPID_PUBLIC_KEY
 COPY packages/types ./packages/types
 COPY packages/ui ./packages/ui
 COPY apps/web ./apps/web

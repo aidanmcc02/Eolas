@@ -10,16 +10,27 @@ function urlBase64ToUint8Array(base64: string): ArrayBuffer {
   return buf.buffer;
 }
 
+// Returns true if push is supported but permission hasn't been asked yet.
+// Used to decide whether to show the one-time prompt banner.
+export function needsPushPrompt(): boolean {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
+  return Notification.permission === 'default';
+}
+
+// Must be called from a user gesture (tap) on iOS.
 export async function subscribeToPush(): Promise<void> {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+
+  // Request permission first — must happen in the user gesture call stack on iOS.
+  const permission = await Notification.requestPermission();
+  if (permission !== 'granted') return;
+
   if (!VAPID_PUBLIC_KEY) return;
 
   const reg = await navigator.serviceWorker.ready;
   let sub = await reg.pushManager.getSubscription();
 
   if (!sub) {
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') return;
     sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
@@ -33,7 +44,5 @@ export async function subscribeToPush(): Promise<void> {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
     body: JSON.stringify(json),
-  }).catch(() => {
-    // Silently retry on next load
-  });
+  }).catch(() => {});
 }

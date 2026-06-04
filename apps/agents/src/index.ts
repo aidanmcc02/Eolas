@@ -1,4 +1,5 @@
 import cron from 'node-cron';
+import { createServer } from 'node:http';
 import { getWeatherSummary } from './agents/weather.js';
 import { getPollenSummary } from './agents/pollen.js';
 
@@ -43,3 +44,15 @@ console.log('Eolas agents running');
 cron.schedule('0 7 * * *', () => {
   runMorningBrief().catch((err) => console.error('morning brief failed:', err));
 }, { timezone: 'Europe/Dublin' });
+
+// Manual trigger endpoint for testing
+const port = Number(process.env['PORT'] ?? 3002);
+createServer((req, res) => {
+  if (req.method === 'POST' && req.url === '/trigger') {
+    runMorningBrief()
+      .then(() => { res.writeHead(200); res.end('ok'); })
+      .catch((err) => { console.error('trigger failed:', err); res.writeHead(500); res.end('error'); });
+  } else {
+    res.writeHead(404); res.end();
+  }
+}).listen(port, () => console.log(`Agents trigger listening on ${port}`));

@@ -8,7 +8,7 @@ import {
 } from './api/client.js';
 import { AuthGate } from './components/AuthGate.js';
 import { Sidebar } from './components/Sidebar.js';
-import { subscribeToPush } from './lib/push.js';
+import { subscribeToPush, needsPushPrompt } from './lib/push.js';
 import { MessageThread } from './components/MessageThread.js';
 import { FinanceTab } from './components/FinanceTab.js';
 import { isTauri } from './lib/tauri.js';
@@ -25,6 +25,7 @@ export default function App() {
   const [creating, setCreating] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [showPushBanner, setShowPushBanner] = useState(() => needsPushPrompt());
 
   useEffect(() => {
     listConversations()
@@ -32,9 +33,18 @@ export default function App() {
       .catch(() => setLoadError('Failed to load conversations'));
   }, []);
 
+  // If permission was already granted (e.g. from a previous session), re-subscribe
+  // silently so the subscription is saved to the API — no user gesture needed.
   useEffect(() => {
-    subscribeToPush().catch(() => {});
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+      subscribeToPush().catch(() => {});
+    }
   }, []);
+
+  async function handleEnableNotifications() {
+    setShowPushBanner(false);
+    await subscribeToPush().catch(() => {});
+  }
 
   useEffect(() => {
     if (!selectedId) {
@@ -122,6 +132,15 @@ export default function App() {
   return (
     <AuthGate>
       <div className="flex flex-col h-screen bg-slate-950 text-slate-100">
+        {showPushBanner && (
+          <button
+            onClick={handleEnableNotifications}
+            className="shrink-0 w-full bg-indigo-600 hover:bg-indigo-500 text-white text-sm py-2 px-4 text-center transition-colors"
+          >
+            Tap to enable daily weather &amp; pollen notifications
+          </button>
+        )}
+
         {isTauri && (
           <nav className="shrink-0 flex border-b border-slate-800 bg-slate-900 px-2">
             <TabButton active={tab === 'chat'} onClick={() => setTab('chat')}>

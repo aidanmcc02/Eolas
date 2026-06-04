@@ -1,4 +1,4 @@
-CREATE TABLE "push_subscriptions" (
+CREATE TABLE IF NOT EXISTS "push_subscriptions" (
 	"id" text PRIMARY KEY NOT NULL,
 	"endpoint" text NOT NULL,
 	"keys" text NOT NULL,
