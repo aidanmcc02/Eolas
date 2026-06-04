@@ -455,93 +455,90 @@ function OverviewView({
         <StatCard label="TRANSACTIONS" value={String(txCount)} color="#00ff41" />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="border border-[#00ff4122] bg-[#0a0a0a] p-4">
-          <p className="text-[#00ff4155] text-xs tracking-widest mb-3">// SPEND BY CATEGORY</p>
-          {/* Relative wrapper so the donut-hole overlay is positioned correctly */}
-          <div className="relative">
-            <ResponsiveContainer width="100%" height={260}>
-              <PieChart>
-                <Pie
-                  data={categories}
-                  dataKey="total"
-                  nameKey="category"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={90}
-                  innerRadius={50}
-                  paddingAngle={2}
-                  onMouseEnter={(_, index) => setHoveredCategory(categories[index]?.category ?? null)}
-                  onMouseLeave={() => setHoveredCategory(null)}
-                >
-                  {categories.map((c) => (
-                    <Cell
-                      key={c.category}
-                      fill={c.color}
-                      stroke={hoveredCategory === c.category ? c.color : 'transparent'}
-                      strokeWidth={3}
-                      opacity={hoveredCategory === null || hoveredCategory === c.category ? 1 : 0.3}
-                    />
-                  ))}
-                </Pie>
-                <Legend formatter={(value) => <span style={{ color: '#00ff4188', fontSize: 10, fontFamily: 'Share Tech Mono, monospace' }}>{value}</span>} iconSize={8} />
-              </PieChart>
-            </ResponsiveContainer>
+      {/* Pie chart — full width */}
+      <div className="border border-[#00ff4122] bg-[#0a0a0a] p-4">
+        <p className="text-[#00ff4155] text-xs tracking-widest mb-3">// SPEND BY CATEGORY</p>
+        <div className="relative">
+          <ResponsiveContainer width="100%" height={360}>
+            <PieChart>
+              <Pie
+                data={categories}
+                dataKey="total"
+                nameKey="category"
+                cx="50%"
+                cy="50%"
+                outerRadius={140}
+                innerRadius={75}
+                paddingAngle={2}
+                onMouseEnter={(_, index) => setHoveredCategory(categories[index]?.category ?? null)}
+                onMouseLeave={() => setHoveredCategory(null)}
+              >
+                {categories.map((c) => (
+                  <Cell
+                    key={c.category}
+                    fill={c.color}
+                    stroke={hoveredCategory === c.category ? c.color : 'transparent'}
+                    strokeWidth={3}
+                    opacity={hoveredCategory === null || hoveredCategory === c.category ? 1 : 0.3}
+                  />
+                ))}
+              </Pie>
+              <Legend formatter={(value) => <span style={{ color: '#00ff4188', fontSize: 10, fontFamily: 'Share Tech Mono, monospace' }}>{value}</span>} iconSize={8} />
+            </PieChart>
+          </ResponsiveContainer>
 
-            {/* Donut hole label — shows hovered category or total */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none"
-              style={{ paddingBottom: 30 /* offset for legend */ }}
-            >
-              {(() => {
-                const hovered = categories.find((c) => c.category === hoveredCategory);
-                const pieTotal = categories.reduce((s, c) => s + c.total, 0);
-                if (hovered) {
-                  const pct = pieTotal > 0 ? (hovered.total / pieTotal) * 100 : 0;
-                  return (
-                    <div className="text-center animate-fade-in" key={hovered.category}>
-                      <p className="text-[10px] tracking-widest mb-0.5" style={{ color: hovered.color }}>
-                        {hovered.category.toUpperCase()}
-                      </p>
-                      <p className="text-lg font-mono leading-none" style={{ color: hovered.color }}>
-                        {formatCurrency(hovered.total)}
-                      </p>
-                      <p className="text-[10px] mt-0.5" style={{ color: `${hovered.color}88` }}>
-                        {pct.toFixed(1)}%
-                      </p>
-                    </div>
-                  );
-                }
+          {/* Donut hole label */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ paddingBottom: 36 }}>
+            {(() => {
+              const hovered = categories.find((c) => c.category === hoveredCategory);
+              const pieTotal = categories.reduce((s, c) => s + c.total, 0);
+              if (hovered) {
+                const pct = pieTotal > 0 ? (hovered.total / pieTotal) * 100 : 0;
                 return (
-                  <div className="text-center">
-                    <p className="text-[9px] tracking-widest text-[#00ff4144] mb-0.5">TOTAL</p>
-                    <p className="text-base font-mono text-[#00ff4188] leading-none">
-                      {formatCurrency(pieTotal)}
+                  <div className="text-center animate-fade-in" key={hovered.category}>
+                    <p className="text-[11px] tracking-widest mb-1" style={{ color: hovered.color }}>
+                      {hovered.category.toUpperCase()}
+                    </p>
+                    <p className="text-2xl font-mono leading-none" style={{ color: hovered.color }}>
+                      {formatCurrency(hovered.total)}
+                    </p>
+                    <p className="text-xs mt-1" style={{ color: `${hovered.color}88` }}>
+                      {pct.toFixed(1)}%
                     </p>
                   </div>
                 );
-              })()}
-            </div>
+              }
+              return (
+                <div className="text-center">
+                  <p className="text-[10px] tracking-widest text-[#00ff4144] mb-1">TOTAL SPEND</p>
+                  <p className="text-xl font-mono text-[#00ff4188] leading-none">
+                    {formatCurrency(pieTotal)}
+                  </p>
+                </div>
+              );
+            })()}
           </div>
         </div>
+      </div>
 
-        <div className="border border-[#00ff4122] bg-[#0a0a0a] p-4">
-          <p className="text-[#00ff4155] text-xs tracking-widest mb-3">
-            {isOverall ? '// MONTHLY SPEND (ALL TIME)' : '// MONTHLY SPEND'}
-          </p>
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={recentMonths} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
-              <XAxis dataKey="month" tickFormatter={formatMonth} tick={{ fill: '#00ff4166', fontSize: 10, fontFamily: 'Share Tech Mono, monospace' }} axisLine={{ stroke: '#00ff4122' }} tickLine={false} />
-              <YAxis tick={{ fill: '#00ff4166', fontSize: 10, fontFamily: 'Share Tech Mono, monospace' }} axisLine={{ stroke: '#00ff4122' }} tickLine={false} tickFormatter={(v) => `€${v}`} />
-              <Tooltip
-                contentStyle={{ background: '#0d0d0d', border: '1px solid #00ff4133', borderRadius: 0, fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: '#00ff41' }}
-                formatter={(val) => [`€${Number(val).toFixed(2)}`, '']}
-                labelFormatter={(label) => formatMonth(String(label))}
-              />
-              <Bar dataKey="totalSpend" fill="#00cc33" name="Spend" radius={0} />
-              <Bar dataKey="totalIncome" fill="#00ff4133" name="Income" radius={0} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+      {/* Bar chart — full width */}
+      <div className="border border-[#00ff4122] bg-[#0a0a0a] p-4">
+        <p className="text-[#00ff4155] text-xs tracking-widest mb-3">
+          {isOverall ? '// MONTHLY SPEND (ALL TIME)' : '// MONTHLY SPEND'}
+        </p>
+        <ResponsiveContainer width="100%" height={220}>
+          <BarChart data={recentMonths} margin={{ top: 5, right: 10, bottom: 5, left: 5 }}>
+            <XAxis dataKey="month" tickFormatter={formatMonth} tick={{ fill: '#00ff4166', fontSize: 10, fontFamily: 'Share Tech Mono, monospace' }} axisLine={{ stroke: '#00ff4122' }} tickLine={false} />
+            <YAxis tick={{ fill: '#00ff4166', fontSize: 10, fontFamily: 'Share Tech Mono, monospace' }} axisLine={{ stroke: '#00ff4122' }} tickLine={false} tickFormatter={(v) => `€${v}`} />
+            <Tooltip
+              contentStyle={{ background: '#0d0d0d', border: '1px solid #00ff4133', borderRadius: 0, fontFamily: 'Share Tech Mono, monospace', fontSize: 11, color: '#00ff41' }}
+              formatter={(val) => [`€${Number(val).toFixed(2)}`, '']}
+              labelFormatter={(label) => formatMonth(String(label))}
+            />
+            <Bar dataKey="totalSpend" fill="#00cc33" name="Spend" radius={0} />
+            <Bar dataKey="totalIncome" fill="#00ff4133" name="Income" radius={0} />
+          </BarChart>
+        </ResponsiveContainer>
       </div>
 
       {/* Daily spending line chart */}
