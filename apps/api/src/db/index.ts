@@ -5,6 +5,10 @@ import * as schema from './schema.js';
 const url = process.env['DATABASE_URL'];
 if (!url) throw new Error('DATABASE_URL env var is not set');
 
-const sql = postgres(url, { max: 10 });
+const sql = postgres(url, {
+  max: 3,
+  idle_timeout: 20,
+  connect_timeout: 10,
+});
 
 export const db = drizzle(sql, { schema });
