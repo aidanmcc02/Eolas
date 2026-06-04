@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.turbo/
+*.env
+!*.env.example
+
+# Tauri
+apps/desktop/src-tauri/target/
+
+# Finance — never commit real bank data
+apps/desktop/finance-imports/
+*.csv
+!*example*.csv
+
+# OS
+.DS_Store
+Thumbs.db

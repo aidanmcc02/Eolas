@@ -1,0 +1,22 @@
+{
+  "name": "eolas",
+  "private": true,
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "type-check": "turbo type-check",
+    "dev:web": "turbo dev --filter=@eolas/web",
+    "dev:api": "turbo dev --filter=@eolas/api",
+    "dev:desktop": "turbo dev --filter=@eolas/desktop"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.4",
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=10"
+  },
+  "packageManager": "pnpm@10.11.0"
+}

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schema.tauri.app/config/2/capability",
+  "identifier": "default",
+  "description": "Default permissions for Eolas desktop",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "opener:default",
+    "fs:read-files",
+    "http:default",
+    "sql:default"
+  ]
+}
