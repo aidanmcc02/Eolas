@@ -6,7 +6,6 @@ import {
   getUserLocation,
   getLocationLabel,
   saveLocation,
-  weatherGradient,
   uvInfo,
   pollenInfo,
   WMO_EMOJI,
@@ -48,7 +47,9 @@ export function WeatherTab() {
       if (cached) {
         if (!cancelled) setSummary(cached);
       } else {
-        fetchWeatherSummary(weatherData).then((s) => { if (!cancelled) setSummary(s); }).catch(() => {});
+        fetchWeatherSummary(weatherData)
+          .then((s) => { if (!cancelled) setSummary(s); })
+          .catch(() => {});
       }
     }
 
@@ -58,8 +59,8 @@ export function WeatherTab() {
 
   if (error) {
     return (
-      <div className="flex-1 flex items-center justify-center text-slate-500 text-sm">
-        Failed to load weather data
+      <div className="flex-1 flex items-center justify-center bg-[#080808]">
+        <p className="text-[#ff0040] text-xs tracking-widest">ERR: FAILED TO LOAD WEATHER DATA</p>
       </div>
     );
   }
@@ -67,159 +68,149 @@ export function WeatherTab() {
   if (!data) return <WeatherSkeleton />;
 
   const { current, today, week, pollen } = data;
-  const gradient = weatherGradient(current.code);
   const uv = uvInfo(today.uvIndex);
 
   return (
-    <div className="flex-1 overflow-y-auto bg-slate-950">
-      <div className={`bg-gradient-to-b ${gradient} pb-6`}>
+    <div className="flex-1 overflow-y-auto bg-[#080808]">
+      <div className="max-w-2xl mx-auto px-4 py-5 space-y-4">
 
-        {/* AI summary */}
-        <div className="px-4 pt-4">
-          {summary ? (
-            <div className="animate-fade-in opacity-0 flex gap-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm px-4 py-3">
-              <span className="text-indigo-400 text-sm mt-0.5 shrink-0">✦</span>
-              <p className="text-sm text-slate-300 leading-relaxed">{summary}</p>
-            </div>
-          ) : (
-            <div className="flex gap-3 rounded-2xl bg-white/5 border border-white/10 px-4 py-3 animate-pulse">
-              <span className="text-indigo-400/40 text-sm mt-0.5 shrink-0">✦</span>
-              <div className="flex-1 space-y-2 py-0.5">
-                <div className="h-3 bg-white/10 rounded-full w-full" />
-                <div className="h-3 bg-white/10 rounded-full w-4/5" />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Location + date */}
+        {/* Header */}
         <div
-          className="animate-slide-up px-5 pt-5 pb-1 flex justify-between items-baseline opacity-0"
+          className="animate-slide-up opacity-0 flex items-baseline justify-between"
           style={{ animationDelay: '0ms' }}
         >
-          <span className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-            {locationLabel}
-          </span>
-          <span className="text-xs text-slate-500">
+          <span className="text-[#00ff41] text-xs tracking-[0.15em] uppercase">{locationLabel}</span>
+          <span className="text-[#00ff4150] text-xs">
             {new Date().toLocaleDateString('en-IE', {
               weekday: 'short', day: 'numeric', month: 'short',
               timeZone: 'Europe/Dublin',
-            })}
+            }).toUpperCase()}
           </span>
         </div>
 
-        {/* Hero — current temp */}
+        {/* AI summary */}
         <div
-          className="animate-slide-up opacity-0 px-5 pt-4 pb-6 flex items-center gap-6"
+          className="animate-slide-up opacity-0 border border-[#00ff4222] bg-[#0a0a0a] px-4 py-3"
           style={{ animationDelay: '60ms' }}
         >
-          <div className="text-8xl leading-none select-none">
-            {WMO_EMOJI[current.code] ?? '🌡️'}
-          </div>
-          <div>
-            <div className="text-7xl font-thin text-white tracking-tighter leading-none">
-              {current.temp}°
+          <p className="text-[#00ff4155] text-xs tracking-widest mb-2">// AI ANALYSIS</p>
+          {summary ? (
+            <p className="text-[#00cc33] text-xs leading-relaxed animate-fade-in">{summary}</p>
+          ) : (
+            <div className="space-y-1.5 animate-pulse">
+              <div className="h-2 bg-[#00ff4112] w-full" />
+              <div className="h-2 bg-[#00ff4112] w-4/5" />
             </div>
-            <div className="mt-1 text-lg text-slate-300 font-light">
-              {WMO_LABEL[current.code] ?? 'Variable'}
-            </div>
-            <div className="mt-1 text-sm text-slate-500">
-              Feels like {current.feelsLike}° · Wind {current.windSpeed} km/h
-            </div>
-          </div>
+          )}
         </div>
 
-        {/* Condition pills */}
+        {/* Current conditions */}
         <div
-          className="animate-slide-up opacity-0 px-5 flex flex-wrap gap-2"
+          className="animate-slide-up opacity-0 border border-[#00ff4222] bg-[#0a0a0a] px-4 py-4"
           style={{ animationDelay: '120ms' }}
         >
-          {today.precip > 0 && (
-            <Pill icon="💧" label={`${today.precip.toFixed(1)} mm`} sub="Rain" color="text-blue-300" />
-          )}
-          <Pill
-            icon="☀️"
-            label={`UV ${today.uvIndex}`}
-            sub={uv.label}
-            color={uv.color}
-          />
-          <Pill icon="💨" label={`${current.windSpeed} km/h`} sub="Wind" color="text-slate-300" />
-          {today.precip === 0 && (
-            <Pill icon="🌂" label="No rain" sub="Today" color="text-green-400" />
-          )}
-        </div>
-      </div>
+          <p className="text-[#00ff4155] text-xs tracking-widest mb-3">// CURRENT CONDITIONS</p>
 
-      {/* Pollen section */}
-      {pollen && (
-        <section
-          className="animate-slide-up opacity-0 mx-4 mt-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm p-4"
-          style={{ animationDelay: '200ms' }}
-        >
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-3">
-            Pollen Today
-          </h2>
-          <div className="space-y-3">
-            <PollenBar label="Grass" grains={pollen.grass} ready={barsReady} delay={0} />
-            <PollenBar label="Alder" grains={pollen.alder} ready={barsReady} delay={80} />
-            <PollenBar label="Birch" grains={pollen.birch} ready={barsReady} delay={160} />
+          {/* Hero */}
+          <div className="flex items-center gap-5 mb-4">
+            <span className="text-5xl leading-none select-none">{WMO_EMOJI[current.code] ?? '🌡️'}</span>
+            <div>
+              <div className="text-[#00ff41] text-5xl leading-none animate-glow-pulse">
+                {current.temp}<span className="text-2xl text-[#00ff4180]">°C</span>
+              </div>
+              <div className="text-[#00cc33] text-xs mt-1 tracking-wider">
+                {(WMO_LABEL[current.code] ?? 'Variable').toUpperCase()}
+              </div>
+            </div>
           </div>
-        </section>
-      )}
 
-      {/* 7-day forecast */}
-      <section
-        className="animate-slide-up opacity-0 mx-4 mt-4 mb-6"
-        style={{ animationDelay: '280ms' }}
-      >
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-3 px-1">
-          This Week
-        </h2>
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-          {week.map((day, i) => (
-            <DayCard key={day.date.toISOString()} day={day} isToday={i === 0} delay={i * 40} />
-          ))}
+          {/* Stats grid */}
+          <div className="border-t border-[#00ff4115] pt-3 grid grid-cols-2 gap-y-2 gap-x-4 text-xs sm:grid-cols-4">
+            <StatCell label="FEELS LIKE" value={`${current.feelsLike}°C`} />
+            <StatCell label="WIND" value={`${current.windSpeed} km/h`} />
+            <StatCell label="UV INDEX" value={`${today.uvIndex} — ${uv.label.toUpperCase()}`} />
+            <StatCell
+              label="PRECIP"
+              value={today.precip > 0 ? `${today.precip.toFixed(1)} mm` : 'NONE'}
+            />
+          </div>
         </div>
-      </section>
-    </div>
-  );
-}
 
-function Pill({ icon, label, sub, color }: { icon: string; label: string; sub: string; color: string }) {
-  return (
-    <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2">
-      <span className="text-base leading-none">{icon}</span>
-      <div>
-        <div className={`text-sm font-semibold leading-tight ${color}`}>{label}</div>
-        <div className="text-xs text-slate-500 leading-tight">{sub}</div>
+        {/* Pollen */}
+        {pollen && (
+          <div
+            className="animate-slide-up opacity-0 border border-[#00ff4222] bg-[#0a0a0a] px-4 py-4"
+            style={{ animationDelay: '200ms' }}
+          >
+            <p className="text-[#00ff4155] text-xs tracking-widest mb-3">// POLLEN INDEX</p>
+            <div className="space-y-3">
+              <PollenRow label="GRASS" grains={pollen.grass} ready={barsReady} delay={0} />
+              <PollenRow label="ALDER" grains={pollen.alder} ready={barsReady} delay={80} />
+              <PollenRow label="BIRCH" grains={pollen.birch} ready={barsReady} delay={160} />
+            </div>
+          </div>
+        )}
+
+        {/* 7-day forecast */}
+        <div
+          className="animate-slide-up opacity-0"
+          style={{ animationDelay: '280ms' }}
+        >
+          <p className="text-[#00ff4155] text-xs tracking-widest mb-3">// 7-DAY FORECAST</p>
+          <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4">
+            {week.map((day, i) => (
+              <DayCard key={day.date.toISOString()} day={day} isToday={i === 0} delay={i * 40} />
+            ))}
+          </div>
+        </div>
+
       </div>
     </div>
   );
 }
 
-function PollenBar({ label, grains, ready, delay }: {
+function StatCell({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div className="text-[#00ff4148] text-[10px] tracking-widest">{label}</div>
+      <div className="text-[#00ff41] text-xs mt-0.5">{value}</div>
+    </div>
+  );
+}
+
+/* Map severity label → terminal bar colour (keeps danger signals for High/Very high) */
+function pollenBarColor(label: string): string {
+  if (label === 'High')      return '#ffaa0088';
+  if (label === 'Very high') return '#ff004088';
+  if (label === 'Moderate')  return '#00ff4188';
+  return '#00ff4148'; // Low
+}
+
+function PollenRow({ label, grains, ready, delay }: {
   label: string;
   grains: number;
   ready: boolean;
   delay: number;
 }) {
   const info = pollenInfo(grains);
+  const barColor = pollenBarColor(info.label);
 
   return (
-    <div className="flex items-center gap-3">
-      <span className="w-10 text-xs text-slate-400 shrink-0">{label}</span>
-      <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+    <div className="flex items-center gap-3 text-xs">
+      <span className="w-11 text-[#00ff4165] shrink-0">{label}</span>
+      <div className="flex-1 h-1 bg-[#00ff4112] overflow-hidden">
         <div
-          className={`h-full rounded-full transition-all duration-700 ease-out ${info.bg}`}
+          className="h-full transition-all duration-700 ease-out"
           style={{
             width: ready ? `${info.pct}%` : '0%',
             transitionDelay: `${delay}ms`,
+            backgroundColor: barColor,
           }}
         />
       </div>
-      <div className="flex items-center gap-1.5 w-24 shrink-0">
-        <span className={`text-xs font-medium ${info.color}`}>{info.label}</span>
-        <span className="text-xs text-slate-600">({grains})</span>
+      <div className="w-28 shrink-0 flex items-center gap-1.5">
+        <span className="text-[#00ff4170]">{info.label.toUpperCase()}</span>
+        <span className="text-[#00ff4138]">({grains})</span>
       </div>
     </div>
   );
@@ -228,47 +219,61 @@ function PollenBar({ label, grains, ready, delay }: {
 function DayCard({ day, isToday, delay }: { day: DailyForecast; isToday: boolean; delay: number }) {
   const emoji = WMO_EMOJI[day.code] ?? '🌡️';
   const name = isToday
-    ? 'Today'
-    : day.date.toLocaleDateString('en-IE', { weekday: 'short', timeZone: 'Europe/Dublin' });
+    ? 'TODAY'
+    : day.date.toLocaleDateString('en-IE', {
+        weekday: 'short',
+        timeZone: 'Europe/Dublin',
+      }).toUpperCase();
 
   return (
     <div
-      className={`animate-slide-up opacity-0 shrink-0 flex flex-col items-center gap-1.5 rounded-2xl px-3 py-3 min-w-[64px] border transition-colors ${
+      className={`animate-slide-up opacity-0 shrink-0 flex flex-col items-center gap-1.5 px-3 py-3 min-w-[62px] border transition-all duration-150 ${
         isToday
-          ? 'bg-indigo-600/20 border-indigo-500/30'
-          : 'bg-white/5 border-white/10 hover:bg-white/8'
+          ? 'border-[#00ff4155] bg-[#00ff410a] shadow-[0_0_14px_rgba(0,255,65,0.07)]'
+          : 'border-[#00ff4220] bg-[#0a0a0a] hover:border-[#00ff4240] hover:bg-[#00ff4107]'
       }`}
       style={{ animationDelay: `${320 + delay}ms` }}
     >
-      <span className="text-xs font-medium text-slate-400">{name}</span>
-      <span className="text-2xl leading-none">{emoji}</span>
+      <span className="text-[10px] text-[#00ff4165]">{name}</span>
+      <span className="text-xl leading-none">{emoji}</span>
       {day.precip > 0 && (
-        <span className="text-[10px] text-blue-400">{day.precip.toFixed(0)}mm</span>
+        <span className="text-[10px] text-[#4488ff90]">{day.precip.toFixed(0)}mm</span>
       )}
-      <span className="text-sm font-semibold text-white">{day.tempMax}°</span>
-      <span className="text-xs text-slate-500">{day.tempMin}°</span>
+      <span className="text-xs text-[#00ff41]">{day.tempMax}°</span>
+      <span className="text-[10px] text-[#00ff4145]">{day.tempMin}°</span>
     </div>
   );
 }
 
 function WeatherSkeleton() {
   return (
-    <div className="flex-1 overflow-y-auto bg-slate-950 p-5 space-y-4 animate-pulse">
-      <div className="h-3 w-32 bg-white/10 rounded-full" />
-      <div className="flex items-center gap-6 py-4">
-        <div className="w-20 h-20 bg-white/10 rounded-2xl" />
-        <div className="space-y-2">
-          <div className="h-14 w-28 bg-white/10 rounded-xl" />
-          <div className="h-4 w-36 bg-white/10 rounded-full" />
-          <div className="h-3 w-48 bg-white/10 rounded-full" />
+    <div className="flex-1 overflow-y-auto bg-[#080808] p-5 space-y-4 animate-pulse">
+      <p className="text-[#00ff4140] text-xs tracking-widest">// LOADING WEATHER DATA...</p>
+
+      <div className="border border-[#00ff4118] bg-[#0a0a0a] p-4 space-y-3">
+        <div className="h-2 bg-[#00ff4112] w-24" />
+        <div className="h-12 bg-[#00ff4112] w-32" />
+        <div className="h-2 bg-[#00ff4112] w-48" />
+      </div>
+
+      <div className="border border-[#00ff4118] bg-[#0a0a0a] p-4 space-y-3">
+        <div className="h-2 bg-[#00ff4112] w-20" />
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="flex items-center gap-3">
+            <div className="w-11 h-2 bg-[#00ff4112]" />
+            <div className="flex-1 h-1 bg-[#00ff4112]" />
+            <div className="w-20 h-2 bg-[#00ff4112]" />
+          </div>
+        ))}
+      </div>
+
+      <div className="space-y-2">
+        <div className="h-2 bg-[#00ff4112] w-24" />
+        <div className="flex gap-2">
+          {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+            <div key={i} className="shrink-0 w-[62px] h-24 bg-[#00ff4110] border border-[#00ff4118]" />
+          ))}
         </div>
-      </div>
-      <div className="flex gap-2">
-        {[1, 2, 3].map((i) => <div key={i} className="h-14 w-20 bg-white/10 rounded-xl" />)}
-      </div>
-      <div className="h-32 bg-white/10 rounded-2xl" />
-      <div className="flex gap-2">
-        {[1, 2, 3, 4, 5, 6, 7].map((i) => <div key={i} className="h-28 w-16 bg-white/10 rounded-2xl" />)}
       </div>
     </div>
   );

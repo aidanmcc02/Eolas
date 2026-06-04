@@ -210,6 +210,76 @@ Environment variables are set per-service in the Railway dashboard.
 
 ---
 
+## UI style — terminal / hacker aesthetic
+
+The entire `apps/web` frontend uses a consistent **matrix terminal** theme.
+Every new component or modification must respect this style. Do not introduce
+modern rounded-card, indigo/slate, or light-mode styles.
+
+### Colour palette
+
+| Token | Hex | Usage |
+|---|---|---|
+| `--t-green` | `#00ff41` | Primary text, active states, borders-bright |
+| `--t-green-dim` | `#00cc33` | Assistant messages, secondary text |
+| `--t-green-muted` | `#006622` | Placeholders, very dim labels |
+| `--t-bg` | `#080808` | Page background |
+| `--t-panel` | `#0d0d0d` | Panel / title-bar background |
+| `--t-surface` | `#0a0a0a` | Card / section background |
+| `--t-red` | `#ff0040` | Errors, "Very high" danger states |
+| `--t-cyan` | `#00ffff` | Glitch effect only |
+| Amber | `#ffaa00` | "High" pollen / warning states only |
+| Rain blue | `#4488ff90` | Precipitation values in forecast only |
+
+Borders are always `rgba(0,255,65,<opacity>)` — never white or slate.
+Use `border-[#00ff4122]` for subtle, `border-[#00ff4155]` for active.
+
+### Typography
+
+`Share Tech Mono` (Google Font) is forced on `*` via `index.css`.
+No sans-serif, no rounded fonts. Monospace everywhere.
+Text sizes: `text-xs` for most UI chrome, `text-sm` for messages/content.
+Tracking: `tracking-widest` on labels and section headers.
+
+### Component patterns
+
+- **Section headers:** `// SECTION NAME` in `text-[#00ff4155] text-xs tracking-widest`
+- **Panels / cards:** `border border-[#00ff4222] bg-[#0a0a0a] px-4 py-4` — no `rounded-*`
+- **Buttons:** `border border-[#00ff4138] text-[#00ff41] tracking-widest` with
+  `hover:bg-[#00ff410d] hover:border-[#00ff4165] hover:shadow-[0_0_10px_rgba(0,255,65,0.15)]`
+- **Active / selected:** `border-[#00ff4155]` left-border or full border + `bg-[#00ff410a]`
+- **Inputs:** `.t-input` class (transparent bg, green caret, no border/outline chrome)
+  wrapped in a bordered container that glows on `focus-within`
+- **Destructive / error:** `text-[#ff0040]`, prefix with `ERR:` or `✗`
+
+### Animations (defined in `index.css`)
+
+| Class | Effect |
+|---|---|
+| `animate-blink` | 1 s step cursor blink — blinking `█` block |
+| `animate-glitch` | Periodic colour-shift glitch on titles |
+| `animate-glow-pulse` | Breathing text-shadow — use on hero numbers |
+| `animate-flicker` | Very subtle full-screen opacity dip every ~14 s |
+| `animate-fade-in` | Standard 0.4 s fade — use on dynamic content |
+| `animate-slide-up` | 0.5 s slide + fade — use on page sections |
+| `t-boot-1` … `t-boot-6` | Staggered line reveals (0.1 s – 1.4 s) — boot screens only |
+
+### Global effects (always present)
+
+- CRT scanline overlay via `body::before` — do not remove
+- Screen vignette via `body::after` — do not remove
+- Thin green scrollbar via `::-webkit-scrollbar` rules
+
+### What NOT to do
+
+- No `rounded-xl` / `rounded-2xl` — use `rounded-sm` at most
+- No `bg-white/5`, `border-white/10`, or any white/slate alpha colours
+- No `indigo-*`, `purple-*`, or `blue-*` classes (rain blue `#4488ff90` is the only exception)
+- No emoji-only icons as primary UI — emojis are allowed as weather-condition glyphs only
+- No light backgrounds, gradients, or glassmorphism effects
+
+---
+
 ## Conventions
 
 - All packages use `@eolas/<name>` as the npm package name.

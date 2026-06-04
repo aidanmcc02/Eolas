@@ -79,10 +79,29 @@ async function runMorningBrief(): Promise<void> {
   await sendNotification(`${place} · ${day}`, advice, '/?tab=weather');
 }
 
+async function runMonthlyFinanceReminder(): Promise<void> {
+  const now = new Date();
+  const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const monthName = prevMonth.toLocaleDateString('en-IE', {
+    month: 'long', year: 'numeric', timeZone: 'Europe/Dublin',
+  });
+  await sendNotification(
+    'Monthly Finance Review',
+    `Import your ${monthName} bank statement — open the Finance tab to get started.`,
+    '/?tab=finance',
+  );
+}
+
 console.log('Eolas agents running');
 
+// Morning weather brief — 7am daily
 cron.schedule('0 7 * * *', () => {
   runMorningBrief().catch((err) => console.error('morning brief failed:', err));
+}, { timezone: 'Europe/Dublin' });
+
+// Monthly finance reminder — 9am on the 1st of every month
+cron.schedule('0 9 1 * *', () => {
+  runMonthlyFinanceReminder().catch((err) => console.error('finance reminder failed:', err));
 }, { timezone: 'Europe/Dublin' });
 
 const port = Number(process.env['PORT'] ?? 3002);
