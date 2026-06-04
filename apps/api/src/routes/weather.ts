@@ -1,8 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import Anthropic from '@anthropic-ai/sdk';
 
-const anthropic = new Anthropic();
-
 interface WeatherSummaryBody {
   temp: number;
   feelsLike: number;
@@ -27,6 +25,7 @@ export async function weatherRoutes(app: FastifyInstance): Promise<void> {
     ].filter(Boolean).join('. ');
 
     try {
+      const anthropic = new Anthropic();
       const msg = await anthropic.messages.create({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 120,
