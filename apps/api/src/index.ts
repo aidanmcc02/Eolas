@@ -29,4 +29,4 @@ await app.register(async (api) => {
 });
 
 const port = Number(process.env['PORT'] ?? 3001);
-await app.listen({ port, host: '0.0.0.0' });
+await app.listen({ port, host: '::' });
