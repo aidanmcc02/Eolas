@@ -7,9 +7,9 @@ server {
     gzip_types text/plain text/css application/json application/javascript text/javascript;
     gzip_min_length 1024;
 
-    # Re-resolve DNS on every request so nginx picks up new API container IPs after restarts.
-    # 127.0.0.11 is Docker/Railway's internal DNS resolver.
-    resolver 127.0.0.11 valid=10s ipv6=off;
+    # RESOLVER is injected at container startup from /etc/resolv.conf (see Dockerfile CMD).
+    # valid=10s forces re-resolution so nginx picks up new API container IPs after restarts.
+    resolver ${RESOLVER} valid=10s ipv6=off;
 
     location /v1/ {
         set $api ${API_INTERNAL_URL};
