@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   fetchWeather,
+  fetchWeatherSummary,
   weatherGradient,
   uvInfo,
   pollenInfo,
@@ -12,15 +13,18 @@ import {
 
 export function WeatherTab() {
   const [data, setData] = useState<WeatherData | null>(null);
+  const [summary, setSummary] = useState<string | null>(null);
   const [error, setError] = useState(false);
   const [barsReady, setBarsReady] = useState(false);
 
   useEffect(() => {
     setBarsReady(false);
+    setSummary(null);
     fetchWeather()
       .then((d) => {
         setData(d);
         setTimeout(() => setBarsReady(true), 200);
+        fetchWeatherSummary(d).then(setSummary).catch(() => {});
       })
       .catch(() => setError(true));
   }, []);
@@ -42,6 +46,24 @@ export function WeatherTab() {
   return (
     <div className="flex-1 overflow-y-auto bg-slate-950">
       <div className={`bg-gradient-to-b ${gradient} pb-6`}>
+
+        {/* AI summary */}
+        <div className="px-4 pt-4">
+          {summary ? (
+            <div className="animate-fade-in opacity-0 flex gap-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm px-4 py-3">
+              <span className="text-indigo-400 text-sm mt-0.5 shrink-0">✦</span>
+              <p className="text-sm text-slate-300 leading-relaxed">{summary}</p>
+            </div>
+          ) : (
+            <div className="flex gap-3 rounded-2xl bg-white/5 border border-white/10 px-4 py-3 animate-pulse">
+              <span className="text-indigo-400/40 text-sm mt-0.5 shrink-0">✦</span>
+              <div className="flex-1 space-y-2 py-0.5">
+                <div className="h-3 bg-white/10 rounded-full w-full" />
+                <div className="h-3 bg-white/10 rounded-full w-4/5" />
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Location + date */}
         <div

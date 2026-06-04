@@ -1,6 +1,8 @@
 const LAT = 53.3498;
 const LON = -6.2603;
 
+const BASE_URL = (import.meta.env['VITE_API_URL'] as string | undefined) ?? '';
+
 export interface CurrentConditions {
   temp: number;
   feelsLike: number;
@@ -157,4 +159,24 @@ export function pollenInfo(grains: number): { label: string; color: string; bg: 
   if (grains < 50) return { label: 'Moderate', color: 'text-yellow-400', bg: 'bg-yellow-500', pct };
   if (grains < 200) return { label: 'High', color: 'text-orange-400', bg: 'bg-orange-500', pct };
   return { label: 'Very high', color: 'text-red-400', bg: 'bg-red-500', pct: 100 };
+}
+
+export async function fetchWeatherSummary(data: WeatherData): Promise<string> {
+  const apiKey = localStorage.getItem('eolas_api_key') ?? '';
+  const res = await fetch(`${BASE_URL}/v1/weather/summary`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      temp: data.current.temp,
+      feelsLike: data.current.feelsLike,
+      description: WMO_LABEL[data.current.code] ?? 'variable',
+      precip: data.today.precip,
+      uvIndex: data.today.uvIndex,
+      windSpeed: data.current.windSpeed,
+      pollen: data.pollen ?? undefined,
+    }),
+  });
+  if (!res.ok) throw new Error('summary failed');
+  const json = await res.json() as { summary: string };
+  return json.summary;
 }
