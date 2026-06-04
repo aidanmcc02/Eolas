@@ -50,7 +50,8 @@ export async function listMessages(conversationId: string): Promise<Message[]> {
 export type StreamEvent =
   | { type: 'delta'; text: string }
   | { type: 'done'; userMessageId: string; assistantMessageId: string; assistantCreatedAt: string }
-  | { type: 'error'; message: string };
+  | { type: 'error'; message: string }
+  | { type: 'guest_limit' };
 
 export async function* streamMessage(
   conversationId: string,
@@ -61,6 +62,14 @@ export async function* streamMessage(
     headers: headers(true),
     body: JSON.stringify({ content }),
   });
+
+  if (res.status === 403) {
+    const data = await res.json() as { error: string };
+    if (data.error === 'guest_limit') {
+      yield { type: 'guest_limit' };
+      return;
+    }
+  }
 
   if (!res.ok || !res.body) {
     throw new Error(`Failed to send message: ${res.status}`);

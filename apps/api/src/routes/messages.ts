@@ -5,6 +5,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { db } from '../db/index.js';
 import { conversations, messages } from '../db/schema.js';
 import { encrypt, decrypt } from '../lib/crypto.js';
+import { isGuestRequest } from '../lib/auth.js';
 
 const anthropic = new Anthropic();
 
@@ -31,6 +32,18 @@ export async function messagesRoutes(app: FastifyInstance): Promise<void> {
 
     if (!conversation) {
       return reply.code(404).send({ error: 'Conversation not found' });
+    }
+
+    // Guest users may only send one message per conversation
+    if (isGuestRequest(request)) {
+      const existing = await db
+        .select({ id: messages.id })
+        .from(messages)
+        .where(eq(messages.conversationId, conversationId))
+        .limit(1);
+      if (existing.length > 0) {
+        return reply.code(403).send({ error: 'guest_limit' });
+      }
     }
 
     const userMessageId = randomUUID();

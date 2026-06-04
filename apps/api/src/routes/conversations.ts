@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { db } from '../db/index.js';
 import { conversations, messages } from '../db/schema.js';
 import { encrypt, decrypt } from '../lib/crypto.js';
+import { isGuestRequest } from '../lib/auth.js';
 
 export async function conversationsRoutes(app: FastifyInstance): Promise<void> {
   app.post('/conversations', async (request, reply) => {
@@ -23,7 +24,10 @@ export async function conversationsRoutes(app: FastifyInstance): Promise<void> {
     });
   });
 
-  app.get('/conversations', async (_request, reply) => {
+  app.get('/conversations', async (request, reply) => {
+    // Guests don't see the owner's conversation history
+    if (isGuestRequest(request)) return reply.send([]);
+
     const rows = await db
       .select()
       .from(conversations)

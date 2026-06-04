@@ -31,6 +31,7 @@ export default function App() {
   const [createError, setCreateError] = useState<string | null>(null);
   const [showPushBanner, setShowPushBanner] = useState(() => needsPushPrompt());
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [guestLimitHit, setGuestLimitHit] = useState(false);
 
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
@@ -124,6 +125,11 @@ export default function App() {
             ),
           );
           setStreamingText(null);
+        } else if (event.type === 'guest_limit') {
+          // Message was never stored — remove the optimistic entry and show banner
+          setMessages((prev) => prev.filter((m) => m.id !== optimisticUser.id));
+          setStreamingText(null);
+          setGuestLimitHit(true);
         } else if (event.type === 'error') {
           setStreamingText(null);
         }
@@ -185,7 +191,7 @@ export default function App() {
             <Sidebar
               conversations={conversations}
               selectedId={selectedId}
-              onSelect={(id) => { setSelectedId(id); setSidebarOpen(false); }}
+              onSelect={(id) => { setSelectedId(id); setSidebarOpen(false); setGuestLimitHit(false); }}
               onCreate={handleCreate}
               creating={creating}
               createError={createError}
@@ -193,7 +199,21 @@ export default function App() {
               onClose={() => setSidebarOpen(false)}
             />
 
-            <main className="flex-1 overflow-hidden">
+            <main className="flex-1 overflow-hidden flex flex-col">
+              {guestLimitHit && (
+                <div className="flex-shrink-0 px-4 py-2 border-b border-[#ffaa0033] bg-[#ffaa0008] flex items-center justify-between gap-4">
+                  <p className="text-xs text-[#ffaa00] tracking-wide">
+                    GUEST LIMIT — one message per conversation.
+                    Start a new conversation to send another message.
+                  </p>
+                  <button
+                    onClick={() => setGuestLimitHit(false)}
+                    className="text-[#ffaa0066] hover:text-[#ffaa00] text-xs flex-shrink-0"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
               {selectedId ? (
                 <MessageThread
                   messages={messages}
