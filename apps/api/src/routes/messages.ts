@@ -117,7 +117,8 @@ export async function messagesRoutes(app: FastifyInstance): Promise<void> {
         assistantMessageId,
         assistantCreatedAt: assistantCreatedAt.toISOString(),
       });
-    } catch {
+    } catch (err) {
+      console.error('Anthropic stream error:', err);
       sendEvent({ type: 'error', message: 'Failed to get AI response' });
     }
 
